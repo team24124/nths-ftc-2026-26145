@@ -2,27 +2,15 @@ package org.firstinspires.ftc.teamcode.opmode.teleop;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
-import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 // PLEASE PLEASE READ THE README FILE BEFORE TOUCHING THE CODE
 
 @TeleOp(name = "MainTeleOp", group = "!")
-@Config
-public class MainTeleOp extends LinearOpMode {
-    public static double maxTurretPower = 0.6;
+public class MainTeleOp2 extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
@@ -41,11 +29,6 @@ public class MainTeleOp extends LinearOpMode {
 
         // turret
         DcMotor turretAccel = hardwareMap.dcMotor.get("turretAccelerator");
-
-        CRServo leftFeeder = hardwareMap.get(CRServo.class, "leftFeeder");
-        CRServo rightFeeder = hardwareMap.get(CRServo.class, "rightFeeder");
-
-
 
         double turretAccelPower = 0;
 
@@ -74,34 +57,17 @@ public class MainTeleOp extends LinearOpMode {
             // CHECK GM 0 FOR MATH, search mecanum teleop
             // IMPORTANT: REMOVE THE /2 BASED ON DRIVER PREFERENCE.
             double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
-            frontLeftPower = ((y + x + rx) / denominator);
-            backLeftPower = ((y - x + rx) / denominator);
-            frontRightPower = ((y - x - rx) / denominator);
-            backRightPower = ((y + x - rx) / denominator);
+            frontLeftPower = ((y + x + rx) / denominator) /2;
+            backLeftPower = ((y - x + rx) / denominator) /2;
+            frontRightPower = ((y - x - rx) / denominator) /2;
+            backRightPower = ((y + x - rx) / denominator) /2;
 
 
             // turret logic
 
-            if (gamepad1.right_bumper) {
-                turretAccelPower = -maxTurretPower;
-            } else {
-                turretAccelPower = 0;
-            }
+            turretAccelPower = gamepad2.left_stick_x;  // literally just motor power
 
             // eventually add the gecko wheel logic here
-
-            if (gamepad1.a) {
-                telemetry.addData("is a", "yes");
-                leftFeeder.setPower(0.5);
-                rightFeeder.setPower(-0.5);
-                try {
-                    Thread.sleep(350); // Wait for 3 seconds
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                leftFeeder.setPower(0);
-                rightFeeder.setPower(0);
-            }
 
 
             frontLeftMotor.setPower(frontLeftPower);  // kinda straightforward here. just set motors to the previously calculated power, and send that to telemetry as well
@@ -115,7 +81,6 @@ public class MainTeleOp extends LinearOpMode {
             telemetry.addData("FR power", frontRightPower);
             telemetry.addData("BR power", backRightPower);
             telemetry.addData("Turret Power", turretAccelPower);
-            telemetry.update();
         }
     }
 }
