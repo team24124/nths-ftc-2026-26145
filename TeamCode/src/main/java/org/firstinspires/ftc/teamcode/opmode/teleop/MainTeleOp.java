@@ -3,28 +3,32 @@ package org.firstinspires.ftc.teamcode.opmode.teleop;
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
-import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Gamepad;
 
 // PLEASE PLEASE READ THE README FILE BEFORE TOUCHING THE CODE
+
+//personal note: upload code
 
 @TeleOp(name = "MainTeleOp", group = "!")
 @Config
 public class MainTeleOp extends LinearOpMode {
-    public static double maxTurretPower = 0.6;
+    public static double maxTurretPower = 0.63;
+    public static long servoFeedTime = 300;
+    public static long waitBack = 100;
     @Override
     public void runOpMode() throws InterruptedException {
+
+        Gamepad prevgp1 = new Gamepad();
+        Gamepad curgp1 = new Gamepad();
+
+        Gamepad prevgp2 = new Gamepad();
+        Gamepad curgp2 = new Gamepad();
 
         // Declare our motors and empty variables for they're power
 
@@ -39,13 +43,16 @@ public class MainTeleOp extends LinearOpMode {
         double backLeftPower = 0;
         double backRightPower = 0;
 
+        boolean precition = false;
+
         // turret
-        DcMotor turretAccel = hardwareMap.dcMotor.get("turretAccelerator");
+        DcMotorEx turretAccel = hardwareMap.get(DcMotorEx.class,"turretAccelerator");
 
         CRServo leftFeeder = hardwareMap.get(CRServo.class, "leftFeeder");
         CRServo rightFeeder = hardwareMap.get(CRServo.class, "rightFeeder");
 
-
+//        double ballCount = 1;
+//        boolean ballShooting = false;
 
         double turretAccelPower = 0;
 
@@ -64,44 +71,104 @@ public class MainTeleOp extends LinearOpMode {
         if (isStopRequested()) return;
 
         while (opModeIsActive()) {
+            prevgp1.copy(curgp1);
+            curgp1.copy(gamepad1);
+            prevgp2.copy(curgp2);
+            curgp2.copy(gamepad2);
+            // toggle precition movement mode
+            if (gamepad1.y && !prevgp1.y) {
+                precition = !precition;
+            }
 
             // mecanum drivebase logic
 
-            double y = -gamepad1.left_stick_y; // left stick y axis
-            double x = gamepad1.left_stick_x * 1.1; // left stick x axis, multi to counteract imperfect strafing
-            double rx = gamepad1.right_stick_x; // right stick x axis
+            if (precition) {
+                if (gamepad1.dpad_down) {
+                    frontLeftPower = -0.1;
+                    frontRightPower = -0.1;
+                    backLeftPower = -0.1;
+                    backRightPower = -0.1;
+                } else if (gamepad1.dpad_up) {
+                    frontLeftPower = 0.1;
+                    frontRightPower = 0.1;
+                    backLeftPower = 0.1;
+                    backRightPower = 0.1;
+                } else if (gamepad1.dpad_left) {
+                    frontLeftPower = -0.1;
+                    frontRightPower = 0.1;
+                    backLeftPower = 0.1;
+                    backRightPower = -0.1;
+                } else if (gamepad1.dpad_right) {
+                    frontLeftPower = 0.1;
+                    frontRightPower = -0.1;
+                    backLeftPower = -0.1;
+                    backRightPower = 0.1;
+                } else if (gamepad1.left_bumper) {
+                    frontLeftPower = -0.1;
+                    frontRightPower = 0.1;
+                    backLeftPower = -0.1;
+                    backRightPower = 0.1;
+                } else if (gamepad1.right_bumper) {
+                    frontLeftPower = 0.1;
+                    frontRightPower = -0.1;
+                    backLeftPower = 0.1;
+                    backRightPower = -0.1;
+                } else {
+                    frontLeftPower = 0;
+                    frontRightPower = 0;
+                    backLeftPower = 0;
+                    backRightPower = 0;
+                }
+            } else {
+                double y = -gamepad1.left_stick_y; // left stick y axis
+                double x = gamepad1.left_stick_x * 1.1; // left stick x axis, multi to counteract imperfect strafing
+                double rx = gamepad1.right_stick_x; // right stick x axis
 
-            // CHECK GM 0 FOR MATH, search mecanum teleop
-            // IMPORTANT: REMOVE THE /2 BASED ON DRIVER PREFERENCE.
-            double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
-            frontLeftPower = ((y + x + rx) / denominator);
-            backLeftPower = ((y - x + rx) / denominator);
-            frontRightPower = ((y - x - rx) / denominator);
-            backRightPower = ((y + x - rx) / denominator);
-
+                // CHECK GM 0 FOR MATH, search mecanum teleop
+                // IMPORTANT: REMOVE THE /2 BASED ON DRIVER PREFERENCE.
+                double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
+                frontLeftPower = ((y + x + rx) / denominator);
+                backLeftPower = ((y - x + rx) / denominator);
+                frontRightPower = ((y - x - rx) / denominator);
+                backRightPower = ((y + x - rx) / denominator);
+            }
 
             // turret logic
 
-            if (gamepad1.right_bumper) {
+            if (gamepad2.right_bumper) {
                 turretAccelPower = -maxTurretPower;
             } else {
                 turretAccelPower = 0;
             }
 
-            // eventually add the gecko wheel logic here
 
-            if (gamepad1.a) {
-                telemetry.addData("is a", "yes");
+            if ((gamepad2.a && !prevgp2.a) || gamepad2.x) {
                 leftFeeder.setPower(0.5);
                 rightFeeder.setPower(-0.5);
                 try {
-                    Thread.sleep(350); // Wait for 3 seconds
+                    Thread.sleep(servoFeedTime);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 leftFeeder.setPower(0);
                 rightFeeder.setPower(0);
-            }
+            } else if (gamepad2.left_bumper) {
+                leftFeeder.setPower(-0.5);
+                rightFeeder.setPower(0.5);
+                turretAccel.setPower(0.5);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                leftFeeder.setPower(0);
+                rightFeeder.setPower(0);
+                turretAccel.setPower(0);
+            } //else {
+//                leftFeeder.setPower(-0.1);
+//                rightFeeder.setPower(0.1);
+//            }
+
 
 
             frontLeftMotor.setPower(frontLeftPower);  // kinda straightforward here. just set motors to the previously calculated power, and send that to telemetry as well
