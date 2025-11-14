@@ -4,24 +4,23 @@ import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name="RedAuto", group = "!", preselectTeleOp = "MainTeleOp")
+//@Autonomous(name="BlueNoHood", group = "!", preselectTeleOp = "NoHood")
 @Config
-public class RedAuto extends LinearOpMode {
+public class BlueNoHood extends LinearOpMode {
     public static long turretSpinUpTime = 1000;
-    public static double turretPower = 0.63;
+    public static double turretPower = 0.55;
     public static long firstBallsServoTime = 300;
     public static long lastBallServoTime = 600;
     public static long reversingTime = 2000;
-    public static double leftPower = 0.1;
-    public static double rightPower = 0.5;
+    public static double leftPower = 0.5;
+
+    public static double rightPower = 0.1;
 
     @Override
     public void runOpMode() throws InterruptedException {

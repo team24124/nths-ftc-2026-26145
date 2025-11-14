@@ -15,10 +15,10 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 
 //personal note: upload code
 
-@TeleOp(name = "MainTeleOp", group = "!")
+@TeleOp(name = "NoHood", group = "!")
 @Config
-public class MainTeleOp extends LinearOpMode {
-    public static double maxTurretPower = 0.63;
+public class NoHood extends LinearOpMode {
+    public static double maxTurretPower = -1250;
     public static long servoFeedTime = 300;
     public static long waitBack = 100;
     @Override
@@ -47,6 +47,7 @@ public class MainTeleOp extends LinearOpMode {
 
         // turret
         DcMotorEx turretAccel = hardwareMap.get(DcMotorEx.class,"turretAccelerator");
+        turretAccel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         CRServo leftFeeder = hardwareMap.get(CRServo.class, "leftFeeder");
         CRServo rightFeeder = hardwareMap.get(CRServo.class, "rightFeeder");
@@ -136,13 +137,14 @@ public class MainTeleOp extends LinearOpMode {
             // turret logic
 
             if (gamepad2.right_bumper) {
-                turretAccelPower = -maxTurretPower;
+                turretAccel.setVelocity(maxTurretPower);
             } else {
-                turretAccelPower = 0;
+                turretAccel.setVelocity(0);
             }
 
 
             if ((gamepad2.a && !prevgp2.a) || gamepad2.x) {
+                while (turretAccel.getVelocity() > -1230 || turretAccel.getVelocity() < -1270) {idle();}
                 leftFeeder.setPower(0.5);
                 rightFeeder.setPower(-0.5);
                 try {
