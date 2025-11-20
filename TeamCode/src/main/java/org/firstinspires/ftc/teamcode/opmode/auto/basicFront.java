@@ -11,17 +11,17 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name="Red", group = "!", preselectTeleOp = "MTeleOp")
+@Autonomous(name="basicFront", group = "!", preselectTeleOp = "MTeleOp")
 @Config
-public class RedWithHoodPID extends LinearOpMode {
+public class basicFront extends LinearOpMode {
     public static long turretSpinUpTime = 1000;
     public static double turretPower = -1250;
     public static long firstBallsServoTime = 300;
     public static long lastBallServoTime = 600;
-    public static long reversingTime = 2000;
-    public static double leftPower = 0.1;
+    public static long reversingTime = 1000;
+    public static double leftPower = -0.5;
 
-    public static double rightPower = 0.5;
+    public static double rightPower = -0.5;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -50,59 +50,9 @@ public class RedWithHoodPID extends LinearOpMode {
 
         if (isStopRequested()) return;
 
+        telemetry.addData("Instructions:", "Stop auto when robot has exited launch line");
+
         ElapsedTime timer = new ElapsedTime();
-
-        turretAccel.setVelocity(turretPower);
-        while (turretAccel.getVelocity() > -1230 || turretAccel.getVelocity() < -1270) {idle();}
-
-        leftFeeder.setPower(0.5);
-        rightFeeder.setPower(-0.5);
-        timer.reset();
-        while (timer.milliseconds() < firstBallsServoTime) {idle();}
-        leftFeeder.setPower(0);
-        rightFeeder.setPower(0);
-        telemetry.addData("twas the first block", "yes");
-        telemetry.update();
-        timer.reset();
-        while(timer.milliseconds() < 1500) {idle();}
-
-        while (turretAccel.getVelocity() > -1230 || turretAccel.getVelocity() < -1270) {idle();}
-        leftFeeder.setPower(0.5);
-        rightFeeder.setPower(-0.5);
-        timer.reset();
-        while (timer.milliseconds() < firstBallsServoTime) {idle();}
-        leftFeeder.setPower(0);
-        rightFeeder.setPower(0);
-        telemetry.addData("twas the second block", "yes");
-        telemetry.update();
-        timer.reset();
-        while(timer.milliseconds() < 1500) {idle();}
-
-        while (turretAccel.getVelocity() > -1230 || turretAccel.getVelocity() < -1270) {idle();}
-        leftFeeder.setPower(0.5);
-        rightFeeder.setPower(-0.5);
-        timer.reset();
-        while (timer.milliseconds() < firstBallsServoTime) {idle();}
-        leftFeeder.setPower(0);
-        rightFeeder.setPower(0);
-        telemetry.addData("twas the second block", "yes");
-        telemetry.update();
-        timer.reset();
-        while(timer.milliseconds() < 1500) {idle();}
-
-        while (turretAccel.getVelocity() > -1230 || turretAccel.getVelocity() < -1270) {idle();}
-        leftFeeder.setPower(0.5);
-        rightFeeder.setPower(-0.5);
-        timer.reset();
-        while (timer.milliseconds() < firstBallsServoTime) {idle();}
-        leftFeeder.setPower(0);
-        rightFeeder.setPower(0);
-        timer.reset();
-        while (timer.milliseconds() < 500) {idle();}
-        turretAccel.setVelocity(0);
-
-        telemetry.addData("twas the third block", "yes");
-        telemetry.update();
 
         frontLeftMotor.setPower(leftPower);
         backLeftMotor.setPower(leftPower);

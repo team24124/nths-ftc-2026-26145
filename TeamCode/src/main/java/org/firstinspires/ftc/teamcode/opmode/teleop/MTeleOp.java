@@ -10,14 +10,15 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 // PLEASE PLEASE READ THE README FILE BEFORE TOUCHING THE CODE
 
 //personal note: upload code
 
-@TeleOp(name = "NoHood", group = "!")
+@TeleOp(name = "MTeleOp", group = "!")
 @Config
-public class NoHood extends LinearOpMode {
+public class MTeleOp extends LinearOpMode {
     public static double maxTurretPower = -1250;
     public static long servoFeedTime = 300;
     public static long waitBack = 100;
@@ -67,6 +68,7 @@ public class NoHood extends LinearOpMode {
         backRightMotor.setZeroPowerBehavior(BRAKE);
         turretAccel.setZeroPowerBehavior(BRAKE);
 
+        ElapsedTime timer = new ElapsedTime();
         waitForStart();
 
         if (isStopRequested()) return;
@@ -144,14 +146,11 @@ public class NoHood extends LinearOpMode {
 
 
             if ((gamepad2.a && !prevgp2.a) || gamepad2.x) {
-                while (turretAccel.getVelocity() > -1230 || turretAccel.getVelocity() < -1270) {idle();}
+                while ((turretAccel.getVelocity() > -1230 || turretAccel.getVelocity() < -1270) && opModeIsActive()) {idle();}
                 leftFeeder.setPower(0.5);
                 rightFeeder.setPower(-0.5);
-                try {
-                    Thread.sleep(servoFeedTime);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                timer.reset();
+                while (timer.milliseconds() < servoFeedTime && opModeIsActive()) {idle();}
                 leftFeeder.setPower(0);
                 rightFeeder.setPower(0);
             } else if (gamepad2.left_bumper) {

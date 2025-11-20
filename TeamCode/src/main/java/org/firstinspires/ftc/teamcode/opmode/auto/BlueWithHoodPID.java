@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name="BlueWithHood", group = "!", preselectTeleOp = "NoHood")
+@Autonomous(name="Blue", group = "!", preselectTeleOp = "MTeleOp")
 @Config
 public class BlueWithHoodPID extends LinearOpMode {
     public static long turretSpinUpTime = 1000;
