@@ -10,7 +10,9 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import org.firstinspires.ftc.teamcode.util.PIDF;
 
 // PLEASE PLEASE READ THE README FILE BEFORE TOUCHING THE CODE
 
@@ -19,9 +21,11 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(name = "MTeleOp", group = "!")
 @Config
 public class MTeleOp extends LinearOpMode {
-    public static double maxTurretPower = -1250;
+    public static double maxTurretPower = 1250;
     public static long servoFeedTime = 300;
     public static long waitBack = 100;
+    public static double kp = 0;
+    public static double kv = 0.00042;
     @Override
     public void runOpMode() throws InterruptedException {
 
@@ -47,8 +51,9 @@ public class MTeleOp extends LinearOpMode {
         boolean precition = false;
 
         // turret
-        DcMotorEx turretAccel = hardwareMap.get(DcMotorEx.class,"turretAccelerator");
-        turretAccel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        DcMotorEx flywheel = hardwareMap.get(DcMotorEx.class,"turretAccelerator");
+        //flywheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flywheel.setDirection(DcMotorSimple.Direction.REVERSE);
 
         CRServo leftFeeder = hardwareMap.get(CRServo.class, "leftFeeder");
         CRServo rightFeeder = hardwareMap.get(CRServo.class, "rightFeeder");
@@ -57,6 +62,12 @@ public class MTeleOp extends LinearOpMode {
 //        boolean ballShooting = false;
 
         double turretAccelPower = 0;
+        PIDF pv = new PIDF();
+
+        boolean primed = false;
+        boolean rb = false;
+
+        VoltageSensor voltageSensor = hardwareMap.get(VoltageSensor.class, "Control Hub");
 
         // make all motors work in the same direction; counteract reverse motors
         frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -66,7 +77,7 @@ public class MTeleOp extends LinearOpMode {
         backLeftMotor.setZeroPowerBehavior(BRAKE);
         frontRightMotor.setZeroPowerBehavior(BRAKE);
         backRightMotor.setZeroPowerBehavior(BRAKE);
-        turretAccel.setZeroPowerBehavior(BRAKE);
+        flywheel.setZeroPowerBehavior(BRAKE);
 
         ElapsedTime timer = new ElapsedTime();
         waitForStart();
@@ -74,6 +85,8 @@ public class MTeleOp extends LinearOpMode {
         if (isStopRequested()) return;
 
         while (opModeIsActive()) {
+            pv.setPV(kp, kv);
+
             prevgp1.copy(curgp1);
             curgp1.copy(gamepad1);
             prevgp2.copy(curgp2);
@@ -139,24 +152,31 @@ public class MTeleOp extends LinearOpMode {
             // turret logic
 
             if (gamepad2.right_bumper) {
-                turretAccel.setVelocity(maxTurretPower);
+                rb = true;
+                turretAccelPower = pv.calculate(flywheel.getVelocity(), maxTurretPower, voltageSensor.getVoltage());
+                if (flywheel.getVelocity() < (maxTurretPower + 20) && flywheel.getVelocity() > (maxTurretPower - 20)) {
+                    primed = true;
+                }
             } else {
-                turretAccel.setVelocity(0);
+                rb = false;
+                turretAccelPower = 0;
+                primed = false;
             }
 
 
             if ((gamepad2.a && !prevgp2.a) || gamepad2.x) {
-                while ((turretAccel.getVelocity() > -1230 || turretAccel.getVelocity() < -1270) && opModeIsActive()) {idle();}
-                leftFeeder.setPower(0.5);
-                rightFeeder.setPower(-0.5);
-                timer.reset();
-                while (timer.milliseconds() < servoFeedTime && opModeIsActive()) {idle();}
-                leftFeeder.setPower(0);
-                rightFeeder.setPower(0);
+                if (primed) {
+                    leftFeeder.setPower(0.5);
+                    rightFeeder.setPower(-0.5);
+                    timer.reset();
+                    while (timer.milliseconds() < servoFeedTime && opModeIsActive()) {idle();}
+                    leftFeeder.setPower(0);
+                    rightFeeder.setPower(0);
+                }
             } else if (gamepad2.left_bumper) {
                 leftFeeder.setPower(-0.5);
                 rightFeeder.setPower(0.5);
-                turretAccel.setPower(0.5);
+                flywheel.setPower(0.5);
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -164,7 +184,7 @@ public class MTeleOp extends LinearOpMode {
                 }
                 leftFeeder.setPower(0);
                 rightFeeder.setPower(0);
-                turretAccel.setPower(0);
+                flywheel.setPower(0);
             } //else {
 //                leftFeeder.setPower(-0.1);
 //                rightFeeder.setPower(0.1);
@@ -176,13 +196,16 @@ public class MTeleOp extends LinearOpMode {
             backLeftMotor.setPower(backLeftPower);
             frontRightMotor.setPower(frontRightPower);
             backRightMotor.setPower(backRightPower);
-            turretAccel.setPower(turretAccelPower);
+            flywheel.setPower(turretAccelPower);
 
             telemetry.addData("FL power", frontLeftPower);
             telemetry.addData("BL power", backLeftPower);
             telemetry.addData("FR power", frontRightPower);
             telemetry.addData("BR power", backRightPower);
             telemetry.addData("Turret Power", turretAccelPower);
+            telemetry.addData("turret vel", flywheel.getVelocity());
+            telemetry.addData("Turret Ready", primed);
+            telemetry.addData("rb", rb);
             telemetry.update();
         }
     }
