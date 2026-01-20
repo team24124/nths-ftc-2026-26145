@@ -48,11 +48,6 @@ public class RobotCentricDrive extends Drivetrain implements TelemetryObservable
 
     @Override
     public void updateTelemetry(Telemetry telemetry) {
-        Pose2d current = getDrive().localizer.getPose();
-
-        telemetry.addData("Y", current.position.y);
         telemetry.addData("Speed", getSpeeds().getSelected());
-        telemetry.addData("Heading (rad)", current.heading.toDouble());
-        telemetry.addData("Heading (°)", Math.toDegrees(current.heading.toDouble()));
     }
 }

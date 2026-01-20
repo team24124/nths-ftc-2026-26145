@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.hardware.subsystems;
 
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -11,33 +9,32 @@ import org.firstinspires.ftc.teamcode.util.interfaces.SubsystemBase;
 import org.firstinspires.ftc.teamcode.util.interfaces.TelemetryObservable;
 
 public class Intake implements SubsystemBase, TelemetryObservable {
-    private double direction = 1;
     private final DcMotorEx motor;
-    private boolean run = false;
+    private boolean running = false;
+    private boolean reverse = false;
+    private double speed = 1;
     public Intake(HardwareMap hw) {
         this.motor = hw.get(DcMotorEx.class, "intake");
         this.motor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
         this.motor.setDirection(DcMotorSimple.Direction.REVERSE);
     }
 
-    public Action toggleIntake(double intakeSpeed) {
-        return (TelemetryPacket telemetry) -> {
-            run = !run;
-            if (run) {
-                this.motor.setPower(direction*intakeSpeed);
-            } else {
-                this.motor.setPower(0);
-            }
-
-            return false;
-        };
+    public void run(boolean run) {
+        this.running = run;
+        if (run) {
+            if (this.reverse) {this.motor.setPower(this.speed*-1);}
+            else {this.motor.setPower(this.speed);}
+        } else {
+            this.motor.setPower(0);
+        }
     }
 
-    public Action reverseIntake() {
-        return (TelemetryPacket telemetry) -> {
-            direction *= -1;
-            return false;
-        };
+    public void setSpeed(double speed) {
+        this.speed = speed;
+    }
+
+    public void setReverse(boolean reverse) {
+        this.reverse = reverse;
     }
 
     public void manualSetPowerOverride(double p) {
@@ -51,6 +48,7 @@ public class Intake implements SubsystemBase, TelemetryObservable {
 
     @Override
     public void updateTelemetry(Telemetry telemetry) {
-        telemetry.addData("Intake Running", run);
+        telemetry.addData("Reverse?", this.reverse);
+        telemetry.addData("Intake Running", this.running);
     }
 }

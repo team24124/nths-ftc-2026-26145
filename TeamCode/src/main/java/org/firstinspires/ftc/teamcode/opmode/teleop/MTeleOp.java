@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.util.PIDF;
  * Annotated with @TeleOp to appear in the driver station OpMode list.
  * Annotated with @Config to allow variable tuning via FTC Dashboard.
  */
-@TeleOp(name = "MTeleOp", group = "!")
+//@TeleOp(name = "MTeleOp", group = "!")
 @Config
 public class MTeleOp extends LinearOpMode {
     //// --- Tuning Constants (Editable in Dashboard) ---

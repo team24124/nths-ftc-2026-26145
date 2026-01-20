@@ -11,17 +11,19 @@ import org.firstinspires.ftc.teamcode.hardware.Robot;
 
 import java.util.List;
 
-@TeleOp(name = "trste", group = "!")
+@TeleOp(name = "teleop", group = "!")
 @Config
-public class newTeleOp extends OpMode {
+public class  newTeleOp extends OpMode {
     private Robot robot;
-    private Gamepad driver, operator;
     private List<LynxModule> hubs;
 
-    public static double intakeSpeed = 0.5;
+    // ftc dashboard config values
+    public static double intakeSpeed = 1;
     public static double flywheelKp = 0.01;
     public static double flywheelKv = 0.0005;
-    public static double flywheelV = 1000;
+    public static Double[] flywheelV = {1500.0, 2000.0, 1500.0};
+    public static double kickerStartPos = 0.25;
+    public static double kickerEndPos = 0;
 
     @Override
     public void init() {
@@ -31,10 +33,8 @@ public class newTeleOp extends OpMode {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
 
-        driver = gamepad1;
-        operator = gamepad2;
-
-        robot = new Robot(hardwareMap, telemetry);
+        robot = new Robot(hardwareMap, telemetry, gamepad1, gamepad2);
+        robot.kicker.manualSetPositionOverride(kickerStartPos);
         robot.actions.init();
     }
 
@@ -44,25 +44,46 @@ public class newTeleOp extends OpMode {
             hub.clearBulkCache();
         }
 
-        robot.flywheel.pid.setPV(flywheelKp, flywheelKv);
-        robot.flywheel.v = flywheelV;
+        // update values each loop for ftc dashboard config ability
+        robot.flywheel.setPV(flywheelKp, flywheelKv);
+        robot.flywheel.setSpeeds(flywheelV);
+        robot.intake.setSpeed(intakeSpeed);
+        robot.kicker.updatePosTargets(kickerStartPos, kickerEndPos);
 
-        double y = -driver.left_stick_y;
-        double x = driver.left_stick_x * 1.1;
-        double rx = driver.right_stick_x;
+        // toggle 1 controller mode
+//        if (robot.gamepad.driver.startWasPressed()) {
+//            if (robot.gamepad.operator == gamepad1) {robot.gamepad.swapOperator(gamepad2);} else {robot.gamepad.swapOperator(gamepad1);}
+//        }
 
-        robot.drivetrain.drive(x, y, rx);
+        // drivetrain
+        robot.drivetrain.drive(
+                robot.gamepad.driver.left_stick_x * 1.1,
+                -robot.gamepad.driver.left_stick_y,
+                robot.gamepad.driver.right_stick_x
+        );
 
-        if (driver.leftStickButtonWasPressed()) {
+        if (robot.gamepad.driver.leftStickButtonWasPressed()) {
             robot.drivetrain.toggleSpeeds();
         }
 
-        if (driver.xWasPressed()) {
-            robot.actions.schedule(robot.intake.toggleIntake(intakeSpeed));
+        if (robot.gamepad.operator.rightStickButtonWasPressed()) {
+            robot.flywheel.toggleSpeeds();
         }
 
-        robot.actions.schedule(robot.flywheel.run(driver.b));
+        // intake
+        robot.intake.setReverse(robot.gamepad.operator.left_bumper);
+        robot.intake.run(robot.gamepad.operator.left_trigger > 0.5);
 
+        // flywheel
+        robot.flywheel.setReverse(robot.gamepad.operator.right_bumper);
+        robot.flywheel.run(robot.gamepad.operator.right_trigger > 0.5);
+
+        // kicker
+        if (robot.gamepad.operator.aWasPressed()) {
+            robot.actions.schedule(robot.kicker.kick());
+        }
+
+        // periodical calls
         robot.telem.update();
         robot.actions.run();
     }
